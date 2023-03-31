@@ -31,7 +31,8 @@ io.on("connection", (socket) => {
   socket.on("mousemove", (end) => {
     const lastPoint = socket.lastPoint || end;
     const color = socket.color || "black";
-    socket.broadcast.emit("draw", { start: lastPoint, end, color });
+
+    io.emit("draw", { start: lastPoint, end: end, color: color });
     socket.lastPoint = end;
     // Добавляем текущее состояние холста на сервер
     canvasLines.push({ start: lastPoint, end, color });

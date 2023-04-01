@@ -25,15 +25,15 @@ io.on("connection", (socket) => {
   socket.emit("canvas", canvasLines);
 
   socket.on("mousedown", (start) => {
-    socket.broadcast.emit("mousedown", start);
+    socket.emit("mousedown", start);
   });
 
   socket.on("mousemove", (end) => {
     const lastPoint = socket.lastPoint || end;
     const color = socket.color || "black";
 
-    io.emit("draw", { start: lastPoint, end: end, color: color });
     socket.lastPoint = end;
+    socket.emit("draw", { start: lastPoint, end: end, color: color });
     // Добавляем текущее состояние холста на сервер
     canvasLines.push({ start: lastPoint, end, color });
   });

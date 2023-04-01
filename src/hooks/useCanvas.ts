@@ -1,4 +1,9 @@
-import { MouseEventHandler, MutableRefObject, useEffect, useRef } from "react";
+import {
+  MouseEventHandler,
+  MutableRefObject,
+  useEffect,
+  useState,
+} from "react";
 import { useSelector, useDispatch } from "react-redux";
 import type { Socket } from "socket.io-client";
 
@@ -19,6 +24,7 @@ interface Line {
 }
 
 export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
+  const [isDraw, setIsDraw] = useState(false);
   const lines = useSelector(
     (state: { canvas: { lines: Line[] } }) => state.canvas.lines
   );
@@ -39,11 +45,10 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
     if (savedCanvas) {
       const lines = JSON.parse(savedCanvas);
       dispatch({ type: "SET_LINES", payload: lines });
-      lines.forEach(({ start, end, color }: Line) => {
+      lines.forEach(({ start, color }: Line) => {
         context.strokeStyle = color;
         context.beginPath();
         context.moveTo(start.x, start.y);
-        context.lineTo(end.x, end.y);
         context.stroke();
       });
     }
@@ -56,8 +61,8 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
       dispatch({ type: "SET_LINES", payload: canvasLines });
       canvasLines.forEach(({ start, end, color }: Line) => {
         context.strokeStyle = color;
-        context.beginPath();
         context.moveTo(start.x, start.y);
+        context.beginPath();
         context.lineTo(end.x, end.y);
         context.stroke();
       });
@@ -74,17 +79,16 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
         typeof end === "object"
       ) {
         context.strokeStyle = color;
-        console.log("lastPoint", lastPoint);
         context.lineCap = "round";
         context.lineJoin = "round";
         if (lastPoint) {
-          context.moveTo(lastPoint.x, lastPoint.y);
           context.beginPath();
+          context.moveTo(lastPoint.x, lastPoint.y);
           context.lineTo(lastPoint.x, lastPoint.y);
           context.stroke();
         } else {
-          context.moveTo(start.x, start.y);
           context.beginPath();
+          context.moveTo(start.x, start.y);
           context.lineTo(end.x, end.y);
           context.stroke();
         }
@@ -108,15 +112,21 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
   }, [lastPoint, socket]);
 
   const onMouseDown: MouseEventHandler<HTMLCanvasElement> = (event) => {
+    setIsDraw(true);
     const start = {
       x: event.nativeEvent.offsetX,
       y: event.nativeEvent.offsetY,
     };
+    lastPoint = { x: start.x, y: start.y };
     socket.emit("mousedown", start);
   };
 
+  const onMouseUp = () => {
+    setIsDraw(false);
+  };
+
   const onMouseMove: MouseEventHandler<HTMLCanvasElement> = (event) => {
-    if (!event.buttons) {
+    if (!event.buttons && !isDraw) {
       return;
     }
 
@@ -124,11 +134,15 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
       x: event.nativeEvent.offsetX,
       y: event.nativeEvent.offsetY,
     };
+
+    lastPoint = { x: end.x, y: end.y };
+
     socket.emit("mousemove", end);
   };
 
   return {
     onMouseDown,
     onMouseMove,
+    onMouseUp,
   };
 };

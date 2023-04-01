@@ -18,7 +18,7 @@ const socket = io("http://localhost:5002");
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const { onMouseDown, onMouseMove } = useCanvas({
+  const { onMouseDown, onMouseMove, onMouseUp } = useCanvas({
     socket,
     canvasRef,
   });
@@ -30,6 +30,7 @@ export const Canvas = () => {
       height={window.innerHeight}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
     />
   );
 };

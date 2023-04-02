@@ -1,4 +1,4 @@
-import { Header, Canvas, Navigation } from "@/components";
+import { Header, Canvas, Navigation, Toolbar } from "@/components";
 import s from "./styles.module.css";
 
 export const DrawPage = () => {
@@ -6,7 +6,10 @@ export const DrawPage = () => {
     <div className={s.wrapper}>
       <Header />
       <Navigation />
-      <Canvas />
+      <div className={s.canvas}>
+        <Canvas />
+        <Toolbar />
+      </div>
     </div>
   );
 };

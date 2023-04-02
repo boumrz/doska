@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import svgr from "vite-plugin-svgr";
 import * as path from "path";
 
 interface ViteConfigInput {
@@ -14,7 +15,13 @@ export default (args: ViteConfigInput) => {
       : "[name]__[local]__[hash:base64:5]";
 
   return defineConfig({
-    plugins: [react()],
+    plugins: [
+      react(),
+      svgr({
+        exportAsDefault: true,
+        include: "**/*.svg",
+      }),
+    ],
     server: {
       port: 3000,
       // Для запуска на сервере по wi-fi

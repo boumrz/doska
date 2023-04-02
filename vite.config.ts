@@ -2,15 +2,38 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import * as path from "path";
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 3000,
-    // Для запуска на сервере по wi-fi
-    // host: '192.168.1.2',
-  },
-  resolve: {
-    alias: [{ find: "@", replacement: path.resolve(__dirname, "src") }],
-  },
-});
+interface ViteConfigInput {
+  mode: string;
+  command: string;
+}
+
+export default (args: ViteConfigInput) => {
+  const generateScopedName =
+    args.mode === "production"
+      ? "[hash:base64:5]"
+      : "[name]__[local]__[hash:base64:5]";
+
+  return defineConfig({
+    plugins: [react()],
+    server: {
+      port: 3000,
+      // Для запуска на сервере по wi-fi
+      // host: '192.168.1.2',
+    },
+    css: {
+      modules: {
+        localsConvention: "camelCase",
+        generateScopedName,
+      },
+    },
+    resolve: {
+      alias: {
+        "@/pages": path.resolve(__dirname, "./src/pages"),
+        "@/hooks": path.resolve(__dirname, "./src/hooks"),
+        "@/components": path.resolve(__dirname, "./src/components"),
+        "@/assets": path.resolve(__dirname, "./src/assets"),
+        "@/constants": path.resolve(__dirname, "./src/constants"),
+      },
+    },
+  });
+};

@@ -1,10 +1,10 @@
-import { Canvas } from "@/components";
+import { BrowserRouter as Router, RouterProvider } from "react-router-dom";
+import "@/assets/global/styles.css";
+import { routes } from "./routes";
 
 const App = () => {
   return (
-    <div>
-      <Canvas />
-    </div>
+    <RouterProvider router={routes} fallbackElement={<div>Загрузка</div>} />
   );
 };
 

@@ -17,7 +17,10 @@
     "jsx": "react-jsx",
     "paths": {
       "@/components": ["./src/components"],
-      "@/hooks": ["./src/hooks"]
+      "@/hooks": ["./src/hooks"],
+      "@/pages": ["./src/pages/index.ts"],
+      "@/assets/*": ["./src/assets/*"],
+      "@/constants": ["./src/constants/index.ts"]
     }
   },
   "include": ["src"],

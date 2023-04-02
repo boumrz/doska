@@ -1,0 +1,7 @@
+.wrapper {
+  display: flex;
+  justify-content: center;
+  height: 48px;
+  background-color: transparent;
+  box-shadow: 0 21px 17px -18px rgba(34, 60, 80, 0.2);
+}

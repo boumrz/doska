@@ -44,8 +44,6 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
       context.lineJoin = "round";
 
       context.beginPath();
-      console.log("start.x, start.y", start.x, start.y);
-      console.log("end.x, end.y", end.x, end.y);
       context.moveTo(start.x, start.y);
       context.lineTo(end.x, end.y);
       context.stroke();

@@ -64,6 +64,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// при локальной разработке убрать HOST отсюда
 http.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
 });

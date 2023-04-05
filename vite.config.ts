@@ -25,7 +25,7 @@ export default (args: ViteConfigInput) => {
     server: {
       port: 3000,
       // Для запуска на сервере по wi-fi
-      // host: '192.168.1.2',
+      host: "192.168.1.5",
     },
     css: {
       modules: {

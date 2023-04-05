@@ -1,6 +1,7 @@
 import {
   MouseEventHandler,
   MutableRefObject,
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -20,18 +21,14 @@ interface Point {
 interface Line {
   start: Point;
   end: Point;
-  color: string;
+  color?: string;
 }
 
 export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
-  const [isDraw, setIsDraw] = useState(false);
-  const lines = useSelector(
-    (state: { canvas: { lines: Line[] } }) => state.canvas.lines
-  );
-  const dispatch = useDispatch();
-  let lastPoint: Point | null = null;
+  const [lastPoint, setLastPoint] = useState(<Point | null>null);
+  const [lastPointStart, setLastPointStart] = useState(<Point | null>null);
 
-  useEffect(() => {
+  const handleDraw = ({ start, end, color }: Line) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d");
@@ -40,102 +37,52 @@ export const useCanvas = ({ socket, canvasRef }: UseCanvasProps) => {
     context.lineCap = "round";
     context.strokeStyle = "black";
 
-    // Получаем сохраненное состояние холста из локального хранилища
-    const savedCanvas = localStorage.getItem("canvas");
-    if (savedCanvas) {
-      const lines = JSON.parse(savedCanvas);
-      dispatch({ type: "SET_LINES", payload: lines });
-      lines.forEach(({ start, color }: Line) => {
-        context.strokeStyle = color;
-        context.beginPath();
-        context.moveTo(start.x, start.y);
-        context.stroke();
-      });
+    //TODO: сделать typeguard
+    if (start && end && typeof start === "object" && typeof end === "object") {
+      context.strokeStyle = color || "black";
+      context.lineCap = "round";
+      context.lineJoin = "round";
+
+      context.beginPath();
+      context.moveTo(start.x, start.y);
+      context.lineTo(end.x, end.y);
+      context.stroke();
+    } else {
+      console.error("Неверный формат данных для рисования:", start, end);
     }
+  };
 
-    // Отправляем запрос на получение текущего состояния холста
-    socket.emit("requestCanvas");
-
-    // Восстанавливаем состояние холста
-    socket.on("canvas", (canvasLines) => {
-      dispatch({ type: "SET_LINES", payload: canvasLines });
-      canvasLines.forEach(({ start, end, color }: Line) => {
-        context.strokeStyle = color;
-        context.moveTo(start.x, start.y);
-        context.beginPath();
-        context.lineTo(end.x, end.y);
-        context.stroke();
-      });
-      // Сохраняем текущее состояние холста в локальном хранилище
-      localStorage.setItem("canvas", JSON.stringify(canvasLines));
-    });
-
-    socket.on("draw", ({ start, end, color }: Line) => {
-      //TODO: сделать typeguard
-      if (
-        start &&
-        end &&
-        typeof start === "object" &&
-        typeof end === "object"
-      ) {
-        context.strokeStyle = color;
-        context.lineCap = "round";
-        context.lineJoin = "round";
-        if (lastPoint) {
-          context.beginPath();
-          context.moveTo(lastPoint.x, lastPoint.y);
-          context.lineTo(lastPoint.x, lastPoint.y);
-          context.stroke();
-        } else {
-          context.beginPath();
-          context.moveTo(start.x, start.y);
-          context.lineTo(end.x, end.y);
-          context.stroke();
-        }
-        lastPoint = end;
-        // Сохраняем текущее состояние холста в локальном хранилище и Redux
-        const currentLines = [...lines, { start, end, color }];
-        dispatch({ type: "SET_LINES", payload: currentLines });
-        localStorage.setItem("canvas", JSON.stringify(currentLines));
-      } else {
-        console.error("Неверный формат данных для рисования:", start, end);
-      }
-    });
-
-    // Очищаем холст
-    socket.on("clear", () => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      // Удаляем сохраненное состояние холста из локального хранилища и Redux
-      dispatch({ type: "CLEAR_LINES" });
-      localStorage.removeItem("canvas");
-    });
-  }, [lastPoint, socket]);
+  useEffect(() => {
+    socket.on("draw", handleDraw);
+  }, []);
 
   const onMouseDown: MouseEventHandler<HTMLCanvasElement> = (event) => {
-    setIsDraw(true);
     const start = {
       x: event.nativeEvent.offsetX,
       y: event.nativeEvent.offsetY,
     };
-    lastPoint = { x: start.x, y: start.y };
+
+    setLastPointStart(start);
     socket.emit("mousedown", start);
   };
 
-  const onMouseUp = () => {
-    setIsDraw(false);
-  };
-
-  const onMouseMove: MouseEventHandler<HTMLCanvasElement> = (event) => {
-    if (!event.buttons && !isDraw) {
-      return;
-    }
-
+  const onMouseUp: MouseEventHandler<HTMLCanvasElement> = (event) => {
     const end = {
       x: event.nativeEvent.offsetX,
       y: event.nativeEvent.offsetY,
     };
 
-    lastPoint = { x: end.x, y: end.y };
+    setLastPoint(end);
+    socket.emit("mouseup", end);
+  };
+
+  const onMouseMove: MouseEventHandler<HTMLCanvasElement> = (event) => {
+    const end = {
+      x: event.nativeEvent.offsetX,
+      y: event.nativeEvent.offsetY,
+    };
+
+    setLastPoint(end);
 
     socket.emit("mousemove", end);
   };

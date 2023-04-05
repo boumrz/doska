@@ -13,7 +13,10 @@ interface Line {
   color: string;
 }
 
-const socket = io("http://localhost:5002");
+//для локальной разработки используй localhost
+// const socket = io("http://localhost:5002");
+//чтобы проверить через wi-fi подключение нескольких устройств
+const socket = io("http://192.168.1.5:5002");
 
 export const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

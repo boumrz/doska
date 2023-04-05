@@ -1,8 +1,4 @@
 const express = require("express");
-// const os = require('os');
-
-// const wifiInterface = os.networkInterfaces().wlan0;
-// const wifiIP = wifiInterface.find((iface) => iface.family === 'IPv4').address;
 
 const PORT = 5002;
 const HOST = "192.168.1.5";
@@ -15,23 +11,27 @@ const io = require("socket.io")(http, {
   },
 });
 
-// Инициализируем текущее состояние холста
 let canvasLines = [];
-let isDraw = false;
 
 io.on("connection", (socket) => {
   console.log("a user connected");
 
-  // Отправляем текущее состояние холста новому пользователю
+  // Генерируем уникальное имя пользователя
+  const username = `user${Math.floor(Math.random() * 1000)}`;
+  socket.username = username;
+
+  // Инициализируем параметр isDraw для пользователя
+  socket.isDraw = false;
+
   socket.emit("canvas", canvasLines);
 
   socket.on("mousedown", (start) => {
-    isDraw = true;
+    socket.isDraw = true;
     socket.emit("mousedown", start);
   });
 
   socket.on("mouseup", (start) => {
-    isDraw = false;
+    socket.isDraw = false;
     socket.emit("mousedown", start);
   });
 
@@ -39,14 +39,14 @@ io.on("connection", (socket) => {
     const lastPoint = socket.lastPoint || end;
     const color = socket.color || "black";
     socket.lastPoint = end;
-    if (isDraw) {
+    if (socket.isDraw) {
       io.emit("draw", {
         start: lastPoint,
         end,
         color,
+        username: socket.username,
       });
-      // Добавляем текущее состояние холста на сервер
-      canvasLines.push({ start: lastPoint, end, color });
+      canvasLines.push({ start: lastPoint, end, color, username });
     }
   });
 
@@ -56,15 +56,14 @@ io.on("connection", (socket) => {
 
   socket.on("clear", () => {
     canvasLines = [];
-    socket.broadcast.emit("clear");
+    io.emit("clear");
   });
 
   socket.on("disconnect", () => {
-    console.log("user disconnected");
+    console.log(`${socket.username} disconnected`);
   });
 });
 
-// при локальной разработке убрать HOST отсюда
 http.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}/`);
 });
